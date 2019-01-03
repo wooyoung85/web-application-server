@@ -77,6 +77,10 @@ public class HttpResponse {
         responseBody();
     }
 
+    public void setBody(byte[] body) {
+        this.body = body;
+    }
+
     private void response200Header() {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
@@ -103,40 +107,18 @@ public class HttpResponse {
     }
 
     private void getResponseBodyContents(String requestPage) {
-        try {
-            if ("".equals(requestPage) ||  "/".equals(requestPage)) {
-                this.body = "Hello World 자바 프로그래밍!".getBytes();
-            } else {
-                if (requestPage.equals("/user/list")) {
-                    List<String> templates = null;
-
-                    templates = Files.readAllLines((new File("./webapp" + requestPage + ".html").toPath()));
-
-                    String template = String.join("", templates);
-
-                    StringBuilder sb = new StringBuilder();
-                    List<User> userList = User.getUserList();
-
-                    for (int i = 0; i < userList.size(); i++) {
-                        sb.append("<tr>");
-                        sb.append("<td> </td>");
-                        sb.append("<td>" + userList.get(i).getUserId() + "</td>");
-                        sb.append("<td>" + userList.get(i).getName() + "</td>");
-                        sb.append("<td>" + userList.get(i).getEmail() + "</td>");
-                        sb.append("</tr>");
-                    }
-
-                    template = template.replace("##tbodyContents##", sb.toString());
-                    this.body = template.getBytes();
+        if(body == null){
+            try {
+                if ("".equals(requestPage) ||  "/".equals(requestPage)) {
+                    this.body = "Hello World 자바 프로그래밍!".getBytes();
                 } else {
                     this.body = Files.readAllBytes(new File("./webapp" + requestPage).toPath());
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
-
 
     private void response302Header() {
         try {

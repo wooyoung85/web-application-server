@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import http.HttpMethod;
+import http.RequestLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,43 +19,34 @@ import util.IOUtils;
 public class HttpRequest {
     private static final Logger log = LoggerFactory.getLogger(HttpRequest.class);
 
-    private String method;
+    private HttpMethod method;
     private String url;
-    private Map<String, String> header;
+    private Map<String, String> header = new HashMap<>();
     private String host;
     private int contentLength;
     private String body;
-    private Map<String, String> queryString;
+    private Map<String, String> queryString = new HashMap<>();
     private Map<String, String> cookieValue = new HashMap<>();
 
     public HttpRequest(InputStream is) {
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
             String line = br.readLine();
             if (line == null) {
                 return;
             }
 
-            // method, url 추출
-            String[] requestLine = line.split(" ");
-            String querystrings = "";
-            this.method = requestLine[0].toString();
-            this.url = requestLine[1].toString();
-
-            if (method.equals("GET") && this.url.contains("?")) {
-                String requestUrl = this.url;
-                int questionIndex = requestUrl.indexOf("?");
-                this.url = requestUrl.substring(0, questionIndex);
-                querystrings = requestUrl.substring(questionIndex + 1);
-            }
+            RequestLine requestLine = new RequestLine(line);
+            this.method = requestLine.getMethod();
+            this.url = requestLine.getPath();
+            this.queryString = requestLine.getParams();
 
             // header 추출
-            header = new HashMap<>();
             while (!line.equals("")) {
                 line = br.readLine();
-                int seperatorIdx = line.indexOf(":");
-                if (seperatorIdx != -1) {
-                    this.header.put(line.substring(0, seperatorIdx).trim(), line.substring(seperatorIdx + 1).trim());
+                int seperaterIdx = line.indexOf(":");
+                if (seperaterIdx != -1) {
+                    this.header.put(line.substring(0, seperaterIdx).trim(), line.substring(seperaterIdx + 1).trim());
                 }
             }
 
@@ -66,24 +60,18 @@ public class HttpRequest {
             this.host = getHeaderField("Host");
 
             // contentLength, body 추출
-            if (this.method.equals("POST")) {
+            if (this.method.isPost()) {
                 this.contentLength = Integer.parseInt(getHeaderField("Content-Length"));
                 this.body = IOUtils.readData(br, contentLength);
-            }
-
-            // queryString 추출
-            queryString = new HashMap<>();
-            if (method.equals("GET")) {
-                this.queryString = HttpRequestUtils.parseQueryString(querystrings);
-            } else if (method.equals("POST")) {
                 this.queryString = HttpRequestUtils.parseQueryString(body);
             }
+
         } catch (IOException e) {
             log.error(e.getMessage());
         }
     }
 
-    public String getMethod() {
+    public HttpMethod getMethod() {
         return this.method;
     }
 
