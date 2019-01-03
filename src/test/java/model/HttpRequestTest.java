@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+import http.HttpMethod;
+import http.HttpRequest;
 import org.junit.Test;
 
 public class HttpRequestTest {
@@ -18,7 +20,7 @@ public class HttpRequestTest {
 		InputStream is = new FileInputStream(new File(testDirectory +"Http_GET.txt"));
 		HttpRequest request = new HttpRequest(is);
 		
-		assertEquals("GET", request.getMethod());
+		assertEquals(HttpMethod.GET, request.getMethod());
 		assertEquals("/user/create", request.getUrl());
 		assertEquals("keep-alive", request.getHeaderField("Connection"));
 		assertEquals("wooyoung85", request.getParameter("userId"));
@@ -29,9 +31,11 @@ public class HttpRequestTest {
 		InputStream is = new FileInputStream(new File(testDirectory +"Http_POST.txt"));
 		HttpRequest request = new HttpRequest(is);
 		
-		assertEquals("POST", request.getMethod());
+		assertEquals(HttpMethod.POST, request.getMethod());
 		assertEquals("/user/create", request.getUrl());
 		assertEquals("keep-alive", request.getHeaderField("Connection"));
 		assertEquals("wooyoung85", request.getParameter("userId"));
+		assertEquals("123", request.getParameter("password"));
+		assertEquals("wooyoung85@test.com", request.getParameter("email"));
 	}
 }

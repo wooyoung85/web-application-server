@@ -1,12 +1,20 @@
 package controller;
 
-import model.HttpRequest;
-import model.HttpResponse;
+import http.HttpMethod;
+import http.HttpRequest;
+import http.HttpResponse;
 
 public class AbstractController implements Controller {
     @Override
     public void service(HttpRequest request, HttpResponse response) {
-        HttpMethod
+        HttpMethod requestMethod = request.getMethod();
+
+        if(requestMethod.isGet()){
+            doGet(request, response);
+        }
+        else if(requestMethod.isPost()){
+            doPost(request, response);
+        }
 
     }
 

@@ -1,7 +1,7 @@
 package controller;
 
-import model.HttpRequest;
-import model.HttpResponse;
+import http.HttpRequest;
+import http.HttpResponse;
 
 public interface Controller {
     void service(HttpRequest request, HttpResponse response);

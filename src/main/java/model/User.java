@@ -8,6 +8,13 @@ public class User {
     private String password;
     private String name;
     private String email;
+    public static List<User> userList = new ArrayList<>();
+
+    static {
+        userList.add(new User("test1","1","테스트1","test1@test.com"));
+        userList.add(new User("test2","2","테스트2","test2@test.com"));
+        userList.add(new User("test3","3","테스트3","test3@test.com"));
+    }
 
     public User(String userId, String password, String name, String email) {
         this.userId = userId;
@@ -44,15 +51,5 @@ public class User {
     	else {
     		return false;
     	}
-    }
-    
-	public static List<User> getUserList(){
-    	List<User> users = new ArrayList<>();
-    	
-    	users.add(new User("test1","1","테스트1","test1@test.com"));
-    	users.add(new User("test2","2","테스트2","test2@test.com"));
-    	users.add(new User("test3","3","테스트3","test3@test.com"));
-    	
-    	return users;
     }
 }

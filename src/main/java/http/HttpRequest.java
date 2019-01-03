@@ -1,15 +1,14 @@
-package model;
+package http;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-import http.HttpMethod;
-import http.RequestLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,11 +25,10 @@ public class HttpRequest {
     private int contentLength;
     private String body;
     private Map<String, String> queryString = new HashMap<>();
-    private Map<String, String> cookieValue = new HashMap<>();
 
     public HttpRequest(InputStream is) {
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
             String line = br.readLine();
             if (line == null) {
                 return;
@@ -48,13 +46,6 @@ public class HttpRequest {
                 if (seperaterIdx != -1) {
                     this.header.put(line.substring(0, seperaterIdx).trim(), line.substring(seperaterIdx + 1).trim());
                 }
-            }
-
-            // cookie 추출
-            String cookies = getHeaderField("Cookie");
-
-            if (cookies != null && !cookies.equals("")) {
-                cookieValue = HttpRequestUtils.parseCookies(cookies);
             }
 
             this.host = getHeaderField("Host");
@@ -107,8 +98,12 @@ public class HttpRequest {
         return this.queryString.get(key);
     }
 
-    public String getCookieValue(String key) {
-        return this.cookieValue.get(key);
+    public HttpCookie getCookies(){
+        HttpCookie httpCookie = new HttpCookie(header.get("Cookie"));
+        return httpCookie;
     }
 
+    public HttpSession getSession(){
+        return HttpSessions.getHttpSession(getCookies().getCookie("JSESSIONID"));
+    }
 }

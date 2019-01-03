@@ -1,15 +1,14 @@
-package model;
+package http;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import webserver.RequestHandler;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 public class HttpResponse {
@@ -17,12 +16,10 @@ public class HttpResponse {
 
     private DataOutputStream dos = null;
     private String statusCode;
-    private Map<String, String> header;
+    private Map<String, String> header = new HashMap<>();
     private byte[] body;
     private String redirectUrl;
     private String host;
-
-    private Boolean cookieWithYN;
     private String cookieValue = "";
     private Boolean cssYN = false;
 
@@ -42,16 +39,12 @@ public class HttpResponse {
         this.host = host;
     }
 
-    public void setCookieWithYN(Boolean cookieWithYN) {
-        this.cookieWithYN = cookieWithYN;
-    }
-
     public void setCookieValue(String cookieValue) {
-        this.cookieValue = cookieValue;
+        this.cookieValue += cookieValue + ";";
     }
 
-    public void setCssYN(Boolean cssYN) {
-        this.cssYN = cssYN;
+    public void addHeader(String key, String value){
+        header.put(key, value);
     }
 
     public void forward(String url) {
@@ -81,17 +74,48 @@ public class HttpResponse {
         this.body = body;
     }
 
+    private void getResponseBodyContents(String requestPage) {
+        if(requestPage.endsWith(".css")){
+            this.cssYN = true;
+        }
+
+        if(body == null){
+            try {
+                if ("".equals(requestPage) ||  "/".equals(requestPage)) {
+                    this.body = "Hello World 자바 프로그래밍!".getBytes();
+                } else {
+                    this.body = Files.readAllBytes(new File("./webapp" + requestPage).toPath());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void response200Header() {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
 
             if (this.cssYN) {
-                dos.writeBytes("Content-Type: text/css;charset=utf-8\r\n");
+                header.put("Content-Type", "text/css;charset=utf-8");
             } else {
-                dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+                header.put("Content-Type", "text/html;charset=utf-8");
             }
-            dos.writeBytes("Content-Length: " + body.length + "\r\n");
-            dos.writeBytes("\r\n");
+            header.put("Content-Length", String.valueOf(body.length));
+            processHeader();
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response302Header() {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            header.put("Location", "http://" + host +redirectUrl);
+            if(!cookieValue.equals("")){
+                header.put("Set-Cookie", cookieValue);
+            }
+            processHeader();
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -106,31 +130,10 @@ public class HttpResponse {
         }
     }
 
-    private void getResponseBodyContents(String requestPage) {
-        if(body == null){
-            try {
-                if ("".equals(requestPage) ||  "/".equals(requestPage)) {
-                    this.body = "Hello World 자바 프로그래밍!".getBytes();
-                } else {
-                    this.body = Files.readAllBytes(new File("./webapp" + requestPage).toPath());
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    private void processHeader() throws IOException {
+        for (String key: header.keySet()) {
+            dos.writeBytes(key + ": " + header.get(key) + "\r\n");
         }
+        dos.writeBytes("\r\n");
     }
-
-    private void response302Header() {
-        try {
-            dos.writeBytes("HTTP/1.1 302 Found \r\n");
-            dos.writeBytes("Location: http://" + host + redirectUrl + "\r\n");
-            if(!cookieValue.equals("")){
-                dos.writeBytes("Set-Cookie: " + cookieValue + "\r\n");
-            }
-            dos.writeBytes("\r\n");
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
-    }
-
 }

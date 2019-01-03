@@ -2,9 +2,8 @@ package controller;
 
 import http.HttpRequest;
 import http.HttpResponse;
+import http.HttpSession;
 import model.User;
-
-import java.util.List;
 
 public class LoginController extends AbstractController {
     @Override
@@ -13,16 +12,14 @@ public class LoginController extends AbstractController {
             String userId = request.getQueryString().get("userId");
             String password = request.getQueryString().get("password");
             User loginUser = findUser(userId, password);
-            boolean requestCookieLogined = Boolean.parseBoolean(request.getCookieValue("login"));
 
-            if (!requestCookieLogined) {
-                if (loginUser != null) {
-                    response.setCookieValue("logined=true");
-                    response.sendRedirect("/index.html");
-                } else {
-                    response.setCookieValue("logined=false");
-                    response.sendRedirect("/user/login_failed.html");
-                }
+            if(loginUser != null){
+                HttpSession session = request.getSession();
+                session.setAttribute("user", loginUser);
+                response.sendRedirect("/index.html");
+            }
+            else{
+                response.sendRedirect("/user/login_failed.html");
             }
         }
     }

@@ -2,6 +2,7 @@ package controller;
 
 import http.HttpRequest;
 import http.HttpResponse;
+import http.HttpSession;
 import model.User;
 
 import java.io.File;
@@ -12,7 +13,7 @@ import java.util.List;
 public class ListUserController extends AbstractController {
     @Override
     public void doGet(HttpRequest request, HttpResponse response) {
-        if(request.isLogin()) {
+        if(isLogin(request)) {
             List<String> templates = null;
 
             try {
@@ -42,5 +43,15 @@ public class ListUserController extends AbstractController {
         else{
             response.sendRedirect("/index.html");
         }
+    }
+
+    private boolean isLogin(HttpRequest request){
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
+
+        if(user == null){
+            return false;
+        }
+        return true;
     }
 }
